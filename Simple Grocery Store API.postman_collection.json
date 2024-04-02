@@ -16,36 +16,56 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"\r",
-									"    var jsonData = pm.response.json();\r",
-									"    var token=jsonData.accessToken;\r",
-									"    \r",
-									"\r",
-									"pm.collectionVariables.set(\"accessToken\",token );\r",
-									"\r",
-									"\r",
-									"pm.test(\"Status code is 201\", function () {\r",
-									"    pm.response.to.have.status(201);\r",
-									"});\r",
-									"\r",
-									"pm.test(\"Status code is not 400 or 409\", function () {\r",
-									"    pm.response.to.not.have.status([400,409]);\r",
-									"});\r",
-									"\r",
-									"//check the body property\r",
-									"pm.test(\"validate the property of response body\", function () {\r",
-									"   pm.expect(jsonData).to.haveOwnProperty(\"accessToken\")\r",
-									"});\r",
-									"\r",
-									"//check the  property value type\r",
-									"pm.test(\"validate the type of accessToken\", function () {\r",
-									"   pm.expect(jsonData.accessToken).to.a(\"String\");\r",
-									"});\r",
-									"\r",
-									"\r",
-									"\r",
-									"\r",
-									""
+									"var jsonData = pm.response.json();",
+									"",
+									"var token = jsonData.accessToken;",
+									"",
+									"pm.collectionVariables.set('accessToken', token)",
+									"",
+									"",
+									"//test case for 201",
+									"pm.response.code===201 &&pm.test('validate the property of response body', function () {",
+									"    pm.expect(jsonData).to.haveOwnProperty('accessToken');",
+									"})",
+									"",
+									"pm.response.code===201 && pm.test('validate the type of accessToken', function () {",
+									"    pm.expect(jsonData.accessToken).to.a('String');",
+									"})",
+									"",
+									"//test case for all",
+									"",
+									"pm.test(\"Status code is 201, 400, or 409\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([201, 400, 409]);",
+									"});",
+									"",
+									"",
+									"//test case for 400",
+									"pm.response.code===400 && pm.test(\"Indicates that the parameters provided are invalid\", function () {",
+									"    pm.expect(jsonData).to.haveOwnProperty(\"error\");",
+									"    pm.expect(jsonData.error).to.be.oneOf([\"Invalid or missing client name.\",\"Invalid or missing client email.\"])",
+									"});",
+									"",
+									"//test case for 409",
+									"pm.response.code===409 && pm.test(\"Indicates that an API client has already been registered with this email address.\", function () {",
+									"    pm.expect(jsonData).to.haveOwnProperty(\"error\");",
+									"    pm.expect(jsonData.error).to.be.equal(\"API client already registered. Try a different email.\")",
+									"});",
+									"",
+									"",
+									"",
+									"",
+									"var template = `",
+									"<div>",
+									"    <h3>Access Token</h3>",
+									"    <p>{{response.accessToken}}</p>",
+									"</div>",
+									"`;",
+									"",
+									"function constructVisualizerPayload() {",
+									"    return {response: pm.response.json()}",
+									"}",
+									"",
+									"pm.visualizer.set(template, constructVisualizerPayload());"
 								],
 								"type": "text/javascript",
 								"packages": {}
@@ -173,8 +193,7 @@
 									"\r",
 									"    var jsonData = pm.response.json();\r",
 									"    var product_id=jsonData[0].id;\r",
-									"    console.log(typeof(product_id));\r",
-									"     console.log(product_id);\r",
+									"    \r",
 									"    pm.collectionVariables.set(\"id\", product_id);\r",
 									"\r",
 									"    \r",
@@ -213,6 +232,13 @@
 								],
 								"type": "text/javascript",
 								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
 							}
 						}
 					],
@@ -344,16 +370,16 @@
 								"exec": [
 									"let jsonData=pm.response.json();\r",
 									"\r",
-									"pm.test(\"Status code is 200\", function () {\r",
+									"pm.response.code===200 && pm.test(\"Status code is 200\", function () {\r",
 									"    pm.response.to.have.status(200);\r",
 									"});\r",
 									"\r",
 									"\r",
-									"pm.test(\"Status code is not 404\", function () {\r",
+									"pm.response.code===200 &&pm.test(\"Status code is not 404\", function () {\r",
 									"    pm.response.to.not.have.status(404);\r",
 									"});\r",
 									"\r",
-									"pm.test(\"Body property is correct\", function () {\r",
+									"pm.response.code===200 &&pm.test(\"Body property is correct\", function () {\r",
 									"    for (let i = 0; i < jsonData.length; i++) {\r",
 									"        pm.expect(jsonData).to.haveOwnProperty(\"id\");\r",
 									"        pm.expect(jsonData).to.haveOwnProperty(\"category\");\r",
@@ -365,7 +391,7 @@
 									"    }\r",
 									"});\r",
 									"\r",
-									"pm.test(\"Body value type is correct\", function () {\r",
+									"pm.response.code===200 &&pm.test(\"Body value type is correct\", function () {\r",
 									"   \r",
 									"        pm.expect(jsonData.id).to.a(\"number\");\r",
 									"        pm.expect(jsonData.category).to.a(\"string\");\r",
@@ -378,16 +404,27 @@
 									"\r",
 									"\r",
 									"\r",
-									"pm.test(\"check stock\", function () {\r",
+									"pm.response.code===200 && pm.test(\"check stock\", function () {\r",
 									"     pm.expect(jsonData['current-stock']).to.above(0);\r",
 									"     pm.expect(jsonData.inStock).to.equal(true)\r",
 									"\r",
 									"});\r",
 									"\r",
-									""
+									"pm.response.code===404 && pm.test(\"404 not found\", function () {\r",
+									"\r",
+									"    pm.expect(jsonData).to.haveOwnProperty(\"error\");\r",
+									"    pm.expect(jsonData.error).to.be.a(\"string\")\r",
+									"});"
 								],
 								"type": "text/javascript",
 								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
 							}
 						}
 					],
@@ -405,7 +442,68 @@
 							]
 						}
 					},
-					"response": []
+					"response": [
+						{
+							"name": "404 Not Found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/products/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"products",
+										"1"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "server",
+									"value": "Fly/1b58db98 (2024-03-25)"
+								},
+								{
+									"key": "fly-request-id",
+									"value": "01HTCHDCW74Q64K312981RMKRJ-sin"
+								},
+								{
+									"key": "date",
+									"value": "Mon, 01 Apr 2024 09:56:25 GMT"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "x-powered-by",
+									"value": "Express"
+								},
+								{
+									"key": "etag",
+									"value": "W/\"21-McCtvU9VuMWJomebuaKvrQRJg2U\""
+								},
+								{
+									"key": "content-encoding",
+									"value": "gzip"
+								},
+								{
+									"key": "transfer-encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "via",
+									"value": "1.1 fly.io"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"No product with id 1.\"\n}"
+						}
+					]
 				}
 			]
 		},
@@ -433,6 +531,7 @@
 									"\r",
 									"pm.test(\"The response has all properties\", () => {\r",
 									"  \r",
+									"    pm.expect(jsonData).to.haveOwnProperty(\"created\")\r",
 									"    pm.expect(jsonData.created).to.equal(true);\r",
 									"    pm.expect(jsonData).to.haveOwnProperty(\"cartId\")\r",
 									"    pm.expect(jsonData.cartId).to.be.a('string');\r",
@@ -442,6 +541,13 @@
 								],
 								"type": "text/javascript",
 								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
 							}
 						}
 					],
@@ -476,18 +582,18 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 200\", function () {\r",
+									"pm.response.code===200 && pm.test(\"Status code is 200\", function () {\r",
 									"    pm.response.to.have.status(200);\r",
 									"});\r",
 									"\r",
-									"pm.test(\"Status code is 404\", function () {\r",
+									"pm.response.code===200 && pm.test(\"Status code is 404\", function () {\r",
 									"    pm.response.to.not.have.status(404);\r",
 									"});\r",
 									"\r",
 									"let json_data=pm.response.json();\r",
 									"console.log(json_data);\r",
 									"\r",
-									"pm.test(\"check response body property\", function () {\r",
+									"pm.response.code===200 && pm.test(\"check response body property\", function () {\r",
 									"   let len=json_data.items.length;\r",
 									"   for(let i=0;i<len;i++){\r",
 									"   pm.expect(json_data.items[i]).to.haveOwnProperty(\"id\")\r",
@@ -496,7 +602,7 @@
 									"   }\r",
 									"});\r",
 									"\r",
-									"pm.test(\"check response body property type\", function () {\r",
+									"pm.response.code===200 && pm.test(\"check response body property type\", function () {\r",
 									"   let len=json_data.items.length;\r",
 									"   for(let i=0;i<len;i++){\r",
 									"   pm.expect(json_data.items[i].id).to.be.a(\"number\")\r",
@@ -505,10 +611,22 @@
 									"   }\r",
 									"});\r",
 									"\r",
+									"pm.response.code===404 && pm.test(\"404 not found\", function () {\r",
+									"    \r",
+									"    pm.expect(json_data).to.haveOwnProperty(\"error\");\r",
+									"    pm.expect(json_data.error).to.be.a(\"String\");\r",
+									"});\r",
 									""
 								],
 								"type": "text/javascript",
 								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
 							}
 						}
 					],
@@ -526,7 +644,68 @@
 							]
 						}
 					},
-					"response": []
+					"response": [
+						{
+							"name": "404 not found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/carts/",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"carts",
+										""
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "server",
+									"value": "Fly/1b58db98 (2024-03-25)"
+								},
+								{
+									"key": "fly-request-id",
+									"value": "01HTEHBWHVF0DPG2K9Q41W46EV-sin"
+								},
+								{
+									"key": "date",
+									"value": "Tue, 02 Apr 2024 04:34:05 GMT"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "x-powered-by",
+									"value": "Express"
+								},
+								{
+									"key": "etag",
+									"value": "W/\"54-0M1W4PX+XMa0VrPIhDCvHEdTW2w\""
+								},
+								{
+									"key": "content-encoding",
+									"value": "gzip"
+								},
+								{
+									"key": "transfer-encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "via",
+									"value": "1.1 fly.io"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"The resource could not be found. Check your endpoint and request method.\"\n}"
+						}
+					]
 				},
 				{
 					"name": "Add an items to cart",
@@ -540,28 +719,48 @@
 									"pm.collectionVariables.set(\"item_id\",id);\r",
 									"\r",
 									"\r",
-									"pm.test(\"Status code is 201\", function () {\r",
+									"pm.response.code===201  &&pm.test(\"Status code is 201\", function () {\r",
 									"    pm.response.to.have.status(201);\r",
 									"});\r",
 									"\r",
-									"pm.test(\"Status code is 400\", function () {\r",
+									"pm.response.code===201  &&pm.test(\"Status code is 400\", function () {\r",
 									"    pm.response.to.not.have.status(400);\r",
 									"});\r",
 									"\r",
-									"pm.test(\"check body property\", function () {\r",
+									"pm.response.code===201  && pm.test(\"check body property\", function () {\r",
 									"    pm.expect(json_data).to.haveOwnProperty(\"itemId\")\r",
 									"     pm.expect(json_data).to.haveOwnProperty(\"created\")\r",
 									"});\r",
 									"\r",
-									"pm.test(\"check itemId type \", function () {\r",
+									"pm.response.code===201 &&pm.test(\"check itemId type \", function () {\r",
 									"   \r",
 									"    pm.expect(json_data.itemId).to.be.a(\"number\");\r",
 									"});\r",
+									"\r",
+									"\r",
+									"pm.response.code===400 && pm.test(\"400 bad request \", function () {\r",
+									"   \r",
+									"    pm.expect(json_data).to.haveOwnProperty(\"error\");\r",
+									"     pm.expect(json_data.error).to.be.a(\"string\");\r",
+									"    pm.expect(json_data.error).to.be.oneOf([\"Invalid or missing productId.\",\"This product has already been added to cart.\"]);\r",
+									"\r",
+									"\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
 									"\r",
 									""
 								],
 								"type": "text/javascript",
 								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
 							}
 						}
 					],
@@ -570,7 +769,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n   \"productId\":2177\r\n}",
+							"raw": "{\r\n//    \"productId\":{{product_id}}\r\n   \"productId\":2585\r\n  \r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -589,7 +788,78 @@
 							]
 						}
 					},
-					"response": []
+					"response": [
+						{
+							"name": "400 bad request",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n//    \"productId\":{{product_id}}\r\n   \"productId\":4641\r\n   \r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/carts/{{CartId}}/items",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"carts",
+										"{{CartId}}",
+										"items"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "server",
+									"value": "Fly/1b58db98 (2024-03-25)"
+								},
+								{
+									"key": "fly-request-id",
+									"value": "01HTEJM3P0GFDY7REBBF51KTSM-sin"
+								},
+								{
+									"key": "date",
+									"value": "Tue, 02 Apr 2024 04:56:03 GMT"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "x-powered-by",
+									"value": "Express"
+								},
+								{
+									"key": "etag",
+									"value": "W/\"38-doJkVicOSjcQ/BgI6ZqGcJtsAl4\""
+								},
+								{
+									"key": "content-encoding",
+									"value": "gzip"
+								},
+								{
+									"key": "transfer-encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "via",
+									"value": "1.1 fly.io"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"This product has already been added to cart.\"\n}"
+						}
+					]
 				},
 				{
 					"name": "Get cart items",
@@ -662,20 +932,39 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test('Status code is 204', function () {\r",
+									"pm.response.code==204 &&pm.test('Status code is 204', function () {\r",
 									"    pm.response.to.have.status(204);\r",
 									"})\r",
 									"\r",
-									"pm.test(\"Status code is 400\", function () {\r",
+									"pm.response.code==204 &&pm.test(\"Status code is 400\", function () {\r",
 									"    pm.response.to.not.have.status(400);\r",
 									"});\r",
 									"\r",
-									"pm.test('Status code is 404', function () {\r",
+									"pm.response.code==204 &&pm.test('Status code is 404', function () {\r",
 									"    pm.response.to.not.not.have.status(404);\r",
 									"})\r",
 									"\r",
-									""
+									"pm.response.code==404 && pm.test(\"404 not found\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.haveOwnProperty(\"error\");\r",
+									"    pm.expect(jsonData.error).to.be.a(\"string\");\r",
+									"    \r",
+									"});\r",
+									"pm.response.code==400 && pm.test(\"400 not found\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.haveOwnProperty(\"error\");\r",
+									"    pm.expect(jsonData.error).to.be.a(\"string\");\r",
+									"    \r",
+									"});"
 								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
 								"type": "text/javascript"
 							}
 						}
@@ -685,7 +974,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"quantity\":2\r\n}",
+							"raw": "{\r\n    \"quantity\":4\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -705,7 +994,149 @@
 							]
 						}
 					},
-					"response": []
+					"response": [
+						{
+							"name": "404 not found",
+							"originalRequest": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"quantity\":2\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/carts/items/",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"carts",
+										"items",
+										""
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "server",
+									"value": "Fly/1b58db98 (2024-03-25)"
+								},
+								{
+									"key": "fly-request-id",
+									"value": "01HTEK4YQPPJJNZZ2ZPS4TV6YZ-sin"
+								},
+								{
+									"key": "date",
+									"value": "Tue, 02 Apr 2024 05:05:15 GMT"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "x-powered-by",
+									"value": "Express"
+								},
+								{
+									"key": "etag",
+									"value": "W/\"54-0M1W4PX+XMa0VrPIhDCvHEdTW2w\""
+								},
+								{
+									"key": "content-encoding",
+									"value": "gzip"
+								},
+								{
+									"key": "transfer-encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "via",
+									"value": "1.1 fly.io"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"The resource could not be found. Check your endpoint and request method.\"\n}"
+						},
+						{
+							"name": "400 bad request",
+							"originalRequest": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"quantity\":4\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/carts/{{CartId}}/items/{{item_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"carts",
+										"{{CartId}}",
+										"items",
+										"{{item_id}}"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "server",
+									"value": "Fly/1b58db98 (2024-03-25)"
+								},
+								{
+									"key": "fly-request-id",
+									"value": "01HTEKHWJMFZG33DC06TZ2J86A-sin"
+								},
+								{
+									"key": "date",
+									"value": "Tue, 02 Apr 2024 05:12:19 GMT"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "x-powered-by",
+									"value": "Express"
+								},
+								{
+									"key": "etag",
+									"value": "W/\"3d-kflELzShiZpnxJhHqnP1b4zn7wU\""
+								},
+								{
+									"key": "content-encoding",
+									"value": "gzip"
+								},
+								{
+									"key": "transfer-encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "via",
+									"value": "1.1 fly.io"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"The quantity requested is not available in stock.\"\n}"
+						}
+					]
 				},
 				{
 					"name": "Replace an item in the cart",
@@ -714,20 +1145,35 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 204\", function () {\r",
+									"pm.response.code==204 &&pm.test(\"Status code is 204\", function () {\r",
 									"    pm.response.to.have.status(204);\r",
 									"});\r",
 									"\r",
-									"pm.test(\"Status code is 400\", function () {\r",
+									"pm.response.code==204 &&pm.test(\"Status code is not 400\", function () {\r",
 									"    pm.response.to.not.have.status(400);\r",
 									"});\r",
 									"\r",
 									"\r",
-									"pm.test(\"Status code is 404\", function () {\r",
+									"pm.response.code==204 &&pm.test(\"Status code is not 404\", function () {\r",
 									"    pm.response.to.not.have.status(404);\r",
+									"});\r",
+									"\r",
+									"pm.response.code==400 && pm.test(\"400 bad request\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.haveOwnProperty(\"error\");\r",
+									"    pm.expect(jsonData.error).to.be.a(\"string\");\r",
+									"    \r",
 									"});\r",
 									""
 								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
 								"type": "text/javascript"
 							}
 						}
@@ -757,7 +1203,79 @@
 							]
 						}
 					},
-					"response": []
+					"response": [
+						{
+							"name": "400 Bad Request",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    // \"productId\":{{product_id}},\r\n    \"quantity\":2\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/carts/{{CartId}}/items/{{item_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"carts",
+										"{{CartId}}",
+										"items",
+										"{{item_id}}"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "server",
+									"value": "Fly/1b58db98 (2024-03-25)"
+								},
+								{
+									"key": "fly-request-id",
+									"value": "01HTEKV9CA0J4QHKJQGE81KMPV-sin"
+								},
+								{
+									"key": "date",
+									"value": "Tue, 02 Apr 2024 05:17:27 GMT"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "x-powered-by",
+									"value": "Express"
+								},
+								{
+									"key": "etag",
+									"value": "W/\"29-oQj3XplkY+x83s6gzA5XvjIR5gM\""
+								},
+								{
+									"key": "content-encoding",
+									"value": "gzip"
+								},
+								{
+									"key": "transfer-encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "via",
+									"value": "1.1 fly.io"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Invalid or missing productId.\"\n}"
+						}
+					]
 				},
 				{
 					"name": "Delete an item in the cart",
@@ -766,17 +1284,29 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 204\", function () {\r",
+									"pm.response.code===204 &&pm.test(\"Status code is 204\", function () {\r",
 									"    pm.response.to.have.status(204);\r",
 									"});\r",
 									"\r",
 									"\r",
-									"pm.test(\"Status code is 404\", function () {\r",
+									"pm.response.code===204 &&pm.test(\"Status code is 404\", function () {\r",
 									"    pm.response.to.not.have.status(404);\r",
 									"});\r",
 									"\r",
-									""
+									"pm.response.code===404 && pm.test(\"404 not found\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.haveOwnProperty(\"error\");\r",
+									"    pm.expect(jsonData.error).to.be.a(\"string\");\r",
+									"});"
 								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
 								"type": "text/javascript"
 							}
 						}
@@ -815,32 +1345,44 @@
 									"let order=json_data.orderId\r",
 									"pm.collectionVariables.set(\"orderId\",order );\r",
 									"\r",
-									"pm.test(\"Status code is 201\", function () {\r",
+									"pm.response.code===201 && pm.test(\"Status code is 201\", function () {\r",
 									"    pm.response.to.have.status(201);\r",
 									"});\r",
 									"\r",
-									"pm.test(\"Status code is 400\", function () {\r",
+									"pm.response.code===201 && pm.test(\"Status code is 400\", function () {\r",
 									"    pm.response.to.not.have.status(400);\r",
 									"});\r",
 									"\r",
-									"pm.test(\"Status code is 401\", function () {\r",
+									"pm.response.code===201 && pm.test(\"Status code is 401\", function () {\r",
 									"    pm.response.to.not.have.status(401);\r",
 									"});\r",
 									"\r",
-									"pm.test(\"response body property check\", function () {\r",
+									"pm.response.code===201 && pm.test(\"response body property check\", function () {\r",
 									"     pm.expect(json_data).to.haveOwnProperty(\"orderId\")\r",
 									"});\r",
 									"\r",
-									"pm.test(\"response body property type check\", function () {\r",
+									"pm.response.code===201 && pm.test(\"response body property type check\", function () {\r",
 									"     pm.expect(json_data.orderId).to.be.a(\"string\")\r",
 									"});\r",
 									"\r",
+									"pm.response.code===401 && pm.test(\"401 unauthorized\", function () {\r",
 									"\r",
+									"    pm.expect(json_data).to.haveOwnProperty(\"error\");\r",
+									"    pm.expect(json_data.error).to.be.a(\"string\");\r",
+									"\r",
+									"});\r",
 									"\r",
 									""
 								],
 								"type": "text/javascript",
 								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
 							}
 						}
 					],
@@ -876,7 +1418,144 @@
 							]
 						}
 					},
-					"response": []
+					"response": [
+						{
+							"name": "401 Unauthorized",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"cartId\":\"{{CartId}}\",\r\n    \"customerName\": \"John Doe1\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/orders",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"orders"
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "server",
+									"value": "Fly/1b58db98 (2024-03-25)"
+								},
+								{
+									"key": "fly-request-id",
+									"value": "01HTENYC6A4NCP1PCMEDK0ZFEC-sin"
+								},
+								{
+									"key": "date",
+									"value": "Tue, 02 Apr 2024 05:54:05 GMT"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "x-powered-by",
+									"value": "Express"
+								},
+								{
+									"key": "etag",
+									"value": "W/\"29-zVtH8ziijw/ex5/btOYG8wWe5dk\""
+								},
+								{
+									"key": "content-encoding",
+									"value": "gzip"
+								},
+								{
+									"key": "transfer-encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "via",
+									"value": "1.1 fly.io"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Missing Authorization header.\"\n}"
+						},
+						{
+							"name": "400 Bad Request",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"cartId\":\"{{CartId}}\",\r\n    \"customerName\": \"John Doe1\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/orders1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"orders1"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "server",
+									"value": "Fly/1b58db98 (2024-03-25)"
+								},
+								{
+									"key": "fly-request-id",
+									"value": "01HTEP0SP56MHFYVVCXA3XD340-sin"
+								},
+								{
+									"key": "date",
+									"value": "Tue, 02 Apr 2024 05:55:24 GMT"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "x-powered-by",
+									"value": "Express"
+								},
+								{
+									"key": "etag",
+									"value": "W/\"54-0M1W4PX+XMa0VrPIhDCvHEdTW2w\""
+								},
+								{
+									"key": "content-encoding",
+									"value": "gzip"
+								},
+								{
+									"key": "transfer-encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "via",
+									"value": "1.1 fly.io"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"The resource could not be found. Check your endpoint and request method.\"\n}"
+						}
+					]
 				},
 				{
 					"name": "Get all orders",
@@ -933,10 +1612,25 @@
 									"   }\r",
 									"});\r",
 									"\r",
+									"\r",
+									"pm.response.code===401 && pm.test(\"401 unauthorized\", function () {\r",
+									"\r",
+									"    pm.expect(json_data).to.haveOwnProperty(\"error\");\r",
+									"    pm.expect(json_data.error).to.be.a(\"string\");\r",
+									"\r",
+									"});\r",
+									"\r",
 									""
 								],
 								"type": "text/javascript",
 								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
 							}
 						}
 					],
@@ -946,7 +1640,7 @@
 							"bearer": [
 								{
 									"key": "token",
-									"value": "{{accessToken}}",
+									"value": "",
 									"type": "string"
 								}
 							]
@@ -963,7 +1657,67 @@
 							]
 						}
 					},
-					"response": []
+					"response": [
+						{
+							"name": "401 Unauthorized",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/orders",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"orders"
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "server",
+									"value": "Fly/1b58db98 (2024-03-25)"
+								},
+								{
+									"key": "fly-request-id",
+									"value": "01HTEP4E59QCZ4B65D14A3BXW4-sin"
+								},
+								{
+									"key": "date",
+									"value": "Tue, 02 Apr 2024 05:57:24 GMT"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "x-powered-by",
+									"value": "Express"
+								},
+								{
+									"key": "etag",
+									"value": "W/\"29-zVtH8ziijw/ex5/btOYG8wWe5dk\""
+								},
+								{
+									"key": "content-encoding",
+									"value": "gzip"
+								},
+								{
+									"key": "transfer-encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "via",
+									"value": "1.1 fly.io"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Missing Authorization header.\"\n}"
+						}
+					]
 				},
 				{
 					"name": "Get a single order",
@@ -977,16 +1731,16 @@
 									"    pm.response.to.have.status(200);\r",
 									"});\r",
 									"\r",
-									"pm.test(\"Status code is 401\", function () {\r",
+									"pm.response.code===200 && pm.test(\"Status code is 401\", function () {\r",
 									"    pm.response.to.not.have.status(401);\r",
 									"});\r",
 									"\r",
-									"pm.test(\"Status code is 404\", function () {\r",
+									"pm.response.code===200 &&pm.test(\"Status code is 404\", function () {\r",
 									"    pm.response.to.not.have.status(404);\r",
 									"});\r",
 									"\r",
 									"\r",
-									"pm.test(\"response body property check\", function () {\r",
+									"pm.response.code===200 &&pm.test(\"response body property check\", function () {\r",
 									"   pm.expect(json_data).to.haveOwnProperty(\"id\")\r",
 									"   pm.expect(json_data).to.haveOwnProperty(\"items\")\r",
 									"   pm.expect(json_data).to.haveOwnProperty(\"customerName\")\r",
@@ -1001,7 +1755,7 @@
 									"   }\r",
 									"});\r",
 									"\r",
-									"pm.test(\"response body property type check\", function () {\r",
+									"pm.response.code===200 &&pm.test(\"response body property type check\", function () {\r",
 									"   pm.expect(json_data.id).to.be.a(\"string\")\r",
 									"   pm.expect(json_data.items).to.be.a(\"array\")\r",
 									"   pm.expect(json_data.customerName).to.be.a(\"string\")\r",
@@ -1018,10 +1772,31 @@
 									"});\r",
 									"\r",
 									"\r",
+									"pm.response.code===401 && pm.test(\"401 unauthorized\", function () {\r",
+									"\r",
+									"    pm.expect(json_data).to.haveOwnProperty(\"error\");\r",
+									"    pm.expect(json_data.error).to.be.a(\"string\");\r",
+									"\r",
+									"});\r",
+									"\r",
+									"pm.response.code===404 && pm.test(\"404 unauthorized\", function () {\r",
+									"\r",
+									"    pm.expect(json_data).to.haveOwnProperty(\"error\");\r",
+									"    pm.expect(json_data.error).to.be.a(\"string\");\r",
+									"\r",
+									"});\r",
+									"\r",
 									""
 								],
 								"type": "text/javascript",
 								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
 							}
 						}
 					],
@@ -1049,7 +1824,128 @@
 							]
 						}
 					},
-					"response": []
+					"response": [
+						{
+							"name": "401 Unauthorized",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/orders/{{order_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"orders",
+										"{{order_id}}"
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "server",
+									"value": "Fly/1b58db98 (2024-03-25)"
+								},
+								{
+									"key": "fly-request-id",
+									"value": "01HTEPMFDG4VG40FE8X20X6MKV-sin"
+								},
+								{
+									"key": "date",
+									"value": "Tue, 02 Apr 2024 06:06:09 GMT"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "x-powered-by",
+									"value": "Express"
+								},
+								{
+									"key": "etag",
+									"value": "W/\"29-zVtH8ziijw/ex5/btOYG8wWe5dk\""
+								},
+								{
+									"key": "content-encoding",
+									"value": "gzip"
+								},
+								{
+									"key": "transfer-encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "via",
+									"value": "1.1 fly.io"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Missing Authorization header.\"\n}"
+						},
+						{
+							"name": "404 Not found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/orders1/{{order_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"orders1",
+										"{{order_id}}"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "server",
+									"value": "Fly/1b58db98 (2024-03-25)"
+								},
+								{
+									"key": "fly-request-id",
+									"value": "01HTEPRRH9WWNZWAZ7SC5HGXYS-sin"
+								},
+								{
+									"key": "date",
+									"value": "Tue, 02 Apr 2024 06:08:29 GMT"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "x-powered-by",
+									"value": "Express"
+								},
+								{
+									"key": "etag",
+									"value": "W/\"54-0M1W4PX+XMa0VrPIhDCvHEdTW2w\""
+								},
+								{
+									"key": "content-encoding",
+									"value": "gzip"
+								},
+								{
+									"key": "transfer-encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "via",
+									"value": "1.1 fly.io"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"The resource could not be found. Check your endpoint and request method.\"\n}"
+						}
+					]
 				},
 				{
 					"name": "Update an order",
@@ -1058,22 +1954,29 @@
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Fixed syntax and removed redundant tests\r",
 									"pm.test(\"Status code is 204\", function () {\r",
 									"    pm.response.to.have.status(204);\r",
 									"});\r",
 									"\r",
-									"pm.test(\"Status code is 400\", function () {\r",
-									"    pm.response.to.not.have.status(400);\r",
+									"pm.response.code===401 &&pm.test(\"401 unauthorized\", function () {\r",
+									"    pm.expect(json_data).to.have.property(\"error\");\r",
+									"    pm.expect(json_data.error).to.be.a(\"string\");\r",
 									"});\r",
 									"\r",
-									"pm.test(\"Status code is 401\", function () {\r",
-									"    pm.response.to.not.have.status(401);\r",
-									"});\r",
-									"\r",
-									"pm.test(\"Status code is 404\", function () {\r",
-									"    pm.response.to.not.have.status(404);\r",
+									"pm.response.code===404 &&pm.test(\"404 notfound\", function () {\r",
+									"    pm.expect(json_data).to.have.property(\"error\");\r",
+									"    pm.expect(json_data.error).to.be.a(\"string\");\r",
 									"});"
 								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
 								"type": "text/javascript"
 							}
 						}
@@ -1111,7 +2014,146 @@
 							]
 						}
 					},
-					"response": []
+					"response": [
+						{
+							"name": "401 Unauthorized",
+							"originalRequest": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n \"customerName\": \"Arifin\",\r\n \"comment\":\"Hurry Up\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/orders/{{order_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"orders",
+										"{{order_id}}"
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "server",
+									"value": "Fly/1b58db98 (2024-03-25)"
+								},
+								{
+									"key": "fly-request-id",
+									"value": "01HTEY052N2Z40NTSPTHH3YNWF-sin"
+								},
+								{
+									"key": "date",
+									"value": "Tue, 02 Apr 2024 08:14:52 GMT"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "x-powered-by",
+									"value": "Express"
+								},
+								{
+									"key": "etag",
+									"value": "W/\"29-zVtH8ziijw/ex5/btOYG8wWe5dk\""
+								},
+								{
+									"key": "content-encoding",
+									"value": "gzip"
+								},
+								{
+									"key": "transfer-encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "via",
+									"value": "1.1 fly.io"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Missing Authorization header.\"\n}"
+						},
+						{
+							"name": "404 not found",
+							"originalRequest": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n \"customerName\": \"Arifin\",\r\n \"comment\":\"Hurry Up\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/orders1/{{order_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"orders1",
+										"{{order_id}}"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "server",
+									"value": "Fly/1b58db98 (2024-03-25)"
+								},
+								{
+									"key": "fly-request-id",
+									"value": "01HTEYA9MKAY1NCKSY7R673KRY-sin"
+								},
+								{
+									"key": "date",
+									"value": "Tue, 02 Apr 2024 08:20:24 GMT"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "x-powered-by",
+									"value": "Express"
+								},
+								{
+									"key": "etag",
+									"value": "W/\"54-0M1W4PX+XMa0VrPIhDCvHEdTW2w\""
+								},
+								{
+									"key": "content-encoding",
+									"value": "gzip"
+								},
+								{
+									"key": "transfer-encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "via",
+									"value": "1.1 fly.io"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"The resource could not be found. Check your endpoint and request method.\"\n}"
+						}
+					]
 				},
 				{
 					"name": "Delete an order",
@@ -1120,22 +2162,46 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 204\", function () {\r",
+									" var jsonData = pm.response.json();\r",
+									"pm.response.code===204 &&pm.test(\"Status code is 204\", function () {\r",
 									"    pm.response.to.have.status(204);\r",
 									"});\r",
 									"\r",
-									"pm.test(\"Status code is 400\", function () {\r",
+									"pm.response.code===204 &&pm.test(\"Status code is 400\", function () {\r",
 									"    pm.response.to.not.have.status(400);\r",
 									"});\r",
 									"\r",
-									"pm.test(\"Status code is 401\", function () {\r",
+									"pm.response.code===204 &&pm.test(\"Status code is 401\", function () {\r",
 									"    pm.response.to.not.have.status(401);\r",
 									"});\r",
 									"\r",
-									"pm.test(\"Status code is 404\", function () {\r",
+									"pm.response.code===204 &&pm.test(\"Status code is 404\", function () {\r",
 									"    pm.response.to.not.have.status(404);\r",
-									"});"
+									"});\r",
+									"\r",
+									"\r",
+									"pm.response.code===404 && pm.test(\"404 not found\", function () {\r",
+									"   \r",
+									"    pm.expect(jsonData).to.haveOwnProperty(\"error\");\r",
+									"    pm.expect(jsonData.error).to.be.a(\"string\");\r",
+									"\r",
+									"});\r",
+									"\r",
+									"pm.response.code===401 &&pm.test(\"401 unauthorized\", function () {\r",
+									"    pm.expect(jsonData).to.have.property(\"error\");\r",
+									"    pm.expect(jsonData.error).to.be.a(\"string\");\r",
+									"});\r",
+									"\r",
+									""
 								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
 								"type": "text/javascript"
 							}
 						}
@@ -1164,7 +2230,128 @@
 							]
 						}
 					},
-					"response": []
+					"response": [
+						{
+							"name": "404 not found",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/orders/{{order_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"orders",
+										"{{order_id}}"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "server",
+									"value": "Fly/1b58db98 (2024-03-25)"
+								},
+								{
+									"key": "fly-request-id",
+									"value": "01HTEYZNSHGKW33FF2MB7K3EPP-sin"
+								},
+								{
+									"key": "date",
+									"value": "Tue, 02 Apr 2024 08:32:05 GMT"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "x-powered-by",
+									"value": "Express"
+								},
+								{
+									"key": "etag",
+									"value": "W/\"33-PCphqee/T3zuXJ7UzrHB0SXaF4w\""
+								},
+								{
+									"key": "content-encoding",
+									"value": "gzip"
+								},
+								{
+									"key": "transfer-encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "via",
+									"value": "1.1 fly.io"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"No order with id Bm3xTg8y9wt1wkLfDa3kg.\"\n}"
+						},
+						{
+							"name": "401 Unauthorized",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/orders/{{order_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"orders",
+										"{{order_id}}"
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "server",
+									"value": "Fly/1b58db98 (2024-03-25)"
+								},
+								{
+									"key": "fly-request-id",
+									"value": "01HTEZ9N9Y5KSQ9DDZR76D12QZ-sin"
+								},
+								{
+									"key": "date",
+									"value": "Tue, 02 Apr 2024 08:37:32 GMT"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "x-powered-by",
+									"value": "Express"
+								},
+								{
+									"key": "etag",
+									"value": "W/\"29-zVtH8ziijw/ex5/btOYG8wWe5dk\""
+								},
+								{
+									"key": "content-encoding",
+									"value": "gzip"
+								},
+								{
+									"key": "transfer-encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "via",
+									"value": "1.1 fly.io"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": \"Missing Authorization header.\"\n}"
+						}
+					]
 				}
 			]
 		}
